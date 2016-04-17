@@ -1,23 +1,106 @@
 {% load staticfiles %}
 <html>
   <head>
-    <title>Ashleigh's blog</title>
+    <meta charset="utf-8">
+    <title>Test Web</title>
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="{% static 'css/blog.css' %}">
     <link href='https://fonts.googleapis.com/css?family=Special+Elite' rel='stylesheet' type='text/css'>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="normalize.css">
+      <style>
+        .legend {                                                   /* NEW */
+          font-size: 12px;                                          /* NEW */
+        }                                                           /* NEW */
+        rect {                                                      /* NEW */
+          stroke-width: 2;                                          /* NEW */
+        }                                                           /* NEW */
+      </style>
   </head>
   <body>
       <div class="page-header">
-          <h1><a href="/">Django Girls Blog</a></h1>
+        {% if user.is_authenticated %}
+          <a href="{% url 'post_new' %}" class="top-menu"><span class="glyphicon glyphicon-plus"></span></a>
+        {% endif %}
+          <h1><a href="/">Test Website</a></h1>
       </div>
-      <div class="content container">
-          <div class="row">
-              <div class="col-md-8">
-              {% block content %}
-              {% endblock %}
-              </div>
-          </div>
-      </div>
+      <div id="chart"></div>
+      <!-- <script src="d3.v3.min.js"></script> -->
+      <script>
+        (function(d3) {
+          'use strict';
+
+          // var dataset = [
+            // { label: 'Abulia', count: 10 },
+            // { label: 'Betelgeuse', count: 20 },
+            // { label: 'Cantaloupe', count: 30 },
+            // { label: 'Dijkstra', count: 40 }
+          // ];
+
+          var width = 360;
+          var height = 360;
+          var radius = Math.min(width, height) / 2;
+          var donutWidth = 75;
+          var legendRectSize = 18;                                  // NEW
+          var legendSpacing = 4;                                    // NEW
+
+          var color = d3.scale.category20b();
+
+          var svg = d3.select('#chart')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', 'translate(' + (width / 2) +
+              ',' + (height / 2) + ')');
+
+          var arc = d3.svg.arc()
+            .innerRadius(radius - donutWidth)
+            .outerRadius(radius);
+
+          var pie = d3.layout.pie()
+            .value(function(d) { return d.count; })
+            .sort(null);
+
+          d3.csv('file:///weekdays.csv', function(error, dataset) {dataset.forEach(function(d) {d.count = +d.count;});
+
+            var path = svg.selectAll('path')
+              .data(pie(dataset))
+              .enter()
+              .append('path')
+              .attr('d', arc)
+              .attr('fill', function(d, i) {
+                return color(d.data.label);
+              });
+
+            var legend = svg.selectAll('.legend')                     // NEW
+              .data(color.domain())                                   // NEW
+              .enter()                                                // NEW
+              .append('g')                                            // NEW
+              .attr('class', 'legend')                                // NEW
+              .attr('transform', function(d, i) {                     // NEW
+                var height = legendRectSize + legendSpacing;          // NEW
+                var offset =  height * color.domain().length / 2;     // NEW
+                var horz = -2 * legendRectSize;                       // NEW
+                var vert = i * height - offset;                       // NEW
+                return 'translate(' + horz + ',' + vert + ')';        // NEW
+              });                                                     // NEW
+
+            legend.append('rect')                                     // NEW
+              .attr('width', legendRectSize)                          // NEW
+              .attr('height', legendRectSize)                         // NEW
+              .style('fill', color)                                   // NEW
+              .style('stroke', color);                                // NEW
+
+            legend.append('text')                                     // NEW
+              .attr('x', legendRectSize + legendSpacing)              // NEW
+              .attr('y', legendRectSize - legendSpacing)              // NEW
+              .text(function(d) { return d; });
+
+          });                     // NEW
+
+        })(window.d3);
+      </script>
   </body>
 </html>
